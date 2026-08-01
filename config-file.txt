@@ -1,0 +1,38 @@
+{
+  "participantId": "01",
+  "runNumber": 1,
+  "instructionScreenDurationSec": 6,
+  "postInstructionsFixationSec": 3,
+  "postStimulusFixationSec": 1,
+  "instructionScreens": [
+    "Bienvenido/a y gracias por participar en este estudio.<br><br>En esta tarea, verá aparecer síntomas en la pantalla, <strong>uno tras otro</strong>. Algunos síntomas se presentarán <strong>en formato escrito</strong>, otros <strong>en formato de vídeo</strong>. Cada síntoma permanecerá en la pantalla durante <strong>varios segundos</strong>.",
+    "Su objetivo es recordar si el paciente presentó ese síntoma o no. Tenga en cuenta que algunos síntomas que verá sí estaban presentes en el caso clínico, pero otros <strong>no formaban parte de él</strong>.",
+    "Durante la presentación de cada síntoma, <strong>obsérvelo con atención y no pulse ningún botón</strong>.<br><br>En cuanto aparezca la pantalla de respuesta, <strong>responda lo más rápida y correctamente posible</strong>.",
+    "Tras cada síntoma, aparecerá la pantalla de respuesta. Deberá indicar:<br><br><strong>SÍ</strong> → si el paciente presentó ese síntoma<br><strong>NO</strong> → si el paciente NO presentó ese síntoma<br><br>Utilice el botón izquierdo para responder SÍ y el botón derecho para responder NO.",
+    "Cada síntoma irá precedido de una cruz de fijación en el centro de la pantalla. Mantenga la mirada fija en ella.<br><br>Sus respuestas son definitivas: no podrá volver atrás."
+  ],
+  "trialOrderFile": "data/trial_order_from_excel.json",
+  "media": {
+    "videoFolder": "assets/video_creta",
+    "imageFolder": "assets/written_creta",
+    "imageDurationSec": 5
+  },
+  "response": {
+    "maxDurationSec": 3,
+    "yesLabel": "Si lo viste",
+    "noLabel": "No lo viste",
+    "yesKeys": ["y"],
+    "noKeys": ["b"]
+  },
+  "iti": {
+    "mode": "from_trial_order",
+    "fixedSec": 2,
+    "randomMinSec": 2,
+    "randomMaxSec": 5,
+    "showFixationCross": true
+  },
+  "optseq": {
+    "enabled": true,
+    "folder": "optseq"
+  }
+}

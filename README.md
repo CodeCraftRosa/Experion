@@ -1,36 +1,85 @@
-# LabRepoStarterKit
+# Experion 
 
-Welcome to the `LabRepoStarterKit`! This repository is your go-to blueprint for setting up new projects within the Social Brain Lab Barcelona. Designed to streamline the process of repository creation, it ensures consistency, clarity, and completeness across all lab projects.
+This project is a symptoms recognition paradigm created for fMRI. 
 
-## 🚀 Getting Started
+## What does this paradigm contain?
 
-This starter kit includes a predefined structure and essential files that every project repository should contain. By following this template, lab members can maintain a standardized approach, making collaboration and project management more efficient.
+The paradigm contains the code for 3 runs with 28 trials per run (The content in terms of videos/images naming is provided by an Excel file; meanwhile the trial sequencing and ITI timing is driven by the optseq .par files)
+The following screens are shown for each run: 
 
-### 📁 What's Included
+- Instruction screens shown once at the beginning of each run, followed by a fixation cross before the first trial
+- Screen 1 (stimulus): Image or video of a given symptom
+- Screen 2 (post-stimulus fixation): static fixation cross shown for 1 second between the stimulus and response screens
+- Screen 3 (response): Response of either Yes I saw this symptom ("Si lo viste") / No I did not see this symptom ("No lo viste")
+- Screen 4 (ITI): gray screen with fixation cross
+- All data is logged (including onset times and ReactionTimes) and saved in a CSV format for each run for each participant
 
-- **README Template**: A markdown file template to help you describe your project's purpose, structure, and usage instructions.
-- **.gitignore File**: A pre-configured `.gitignore` file to exclude specific files and directories from Git tracking.
-- **License Template**: Guidance on selecting and including the appropriate license for your project.
-- **Contribution Guidelines**: A template for outlining how others can contribute to your project.
-- **Issue and PR Templates**: Templates for submitting issues and pull requests to encourage clear communication.
+## Source Files Used
 
-### 🛠 How to Use
+- Trial names, length of stimuli, response etc: Originally given by the excel file EXPERION_fMRI_stimulus_order_simulation.xlsx, can however be configurated using the config.txt file
+- Videos copied into: assets/video_creta/
+- Images copied into: assets/written_creta/
+- Per-participant/run timing: optseq/Participant <PP>/experion_<PP>_<run>.par (regenerated to include the extra 1-second post-stimulus fixation cross in each stimulus event's duration)
 
-1. **Clone or Download**: Start by cloning this repository or using it as a template when creating a new repository.
-2. **Customize**: Replace placeholder content with your project-specific information.
-3. **Develop**: Follow the structured folders and file naming conventions as you develop your project.
-4. **Document**: Use the README and contribution guidelines templates to document your project thoroughly.
+## Run Instructions
 
-### 💡 Best Practices
+1. Install dependencies:
 
-- **Consistency is Key**: Adhere to the provided structure for ease of navigation and maintenance.
-- **Clear Documentation**: The clearer your documentation, the easier it is for others to understand and contribute to your project.
-- **Engage with the Community**: Encourage contributions by clearly stating how others can help and what guidelines they should follow.
+```bash
+npm install
+```
 
-## 🌟 Contribute to the Starter Kit
+2. Start the paradigm:
 
-Your feedback and contributions can help improve this starter kit. If you have suggestions, improvements, or additional templates that could benefit the lab, please share them with us.
+```bash
+npm start
+```
 
----
+3. In the start screen, set participant/run and click Start.
 
-The `LabRepoStarterKit` is here to make your project's initial setup as smooth as possible. Let's create, innovate, and collaborate more effectively!
+## Configuration
+
+Edit config-file.txt to change behavior.
+
+Main fields:
+
+- participantId: Here you set the participant Id (can be numerical or with letters)
+- runNumber: Setting the run number to 1,2, or 3.
+- instructionScreenDurationSec: Setting the duration of the instruction screens 
+- postInstructionsFixationSec: Setting the duration of the Fixaction cross before first trial
+- postStimulusFixationSec: Setting the duration of the static fixation cross shown between the stimulus screen and the response screen (default 1 second). When optseq is enabled, this duration is subtracted from each .par event's duration, since the .par files already include it.
+- instructionScreens: This is the exact text displayed on each screen. Each line is one screen.
+- media.imageDurationSec: The written (image) symptoms 
+- response.maxDurationSec: The maximum amount of time for response - however the screen will disappear with a delay of .5 seconds after pressing a button. This is just the maximum time participants have to answer. 
+- response.yesLabel, response.noLabel: THe naming of the response buttons 
+- iti.mode (from_trial_order, fixed, random), iti.fixedSec, iti.randomMinSec, iti.randomMaxSec — used only when optseq.enabled is false
+- iti.showFixationCross
+- optseq.enabled, optseq.folder — when enabled, trial order and ITI timing come from the matching .par file instead of the excel/iti config, if disabled it comes from the internal logic of the code. Currently set to the `optseq` folder.
+
+## Output
+
+Data are saved under:
+
+- <Desktop>/Experion Output/<participantId>/Participant_<participantId>_Run<runNumber>.csv
+
+Each saved trial row includes:
+
+- stimulus file shown
+- symptom status
+- expected response
+- given response
+- expected/given alignment (TRUE or FALSE)
+- stimulus onset
+- response onset
+- reaction time on the response screen
+
+## Rebuild Trial Order From Excel
+
+If the Excel order changes, regenerate JSON:
+
+```bash
+python3 tools/extract_trial_order_from_excel.py \
+  --xlsx /Users/rosa/Downloads/EXPERION_fMRI_stimulus_order_simulation.xlsx \
+  --out data/trial_order_from_excel.json
+```
+

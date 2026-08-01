@@ -50,3 +50,8 @@ rsconnect/
 
 # R project files
 *.Rproj
+
+# Node / Electron
+node_modules/
+output/
+package-lock.json

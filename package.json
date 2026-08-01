@@ -1,0 +1,14 @@
+{
+  "name": "Experion",
+  "version": "1.0.0",
+  "description": "fMRI symptom recognition paradigm",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^37.2.0"
+  }
+}

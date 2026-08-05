@@ -14,10 +14,6 @@ window.onload = async function () {
 
   const s = flowState.currentStimulus;
   const startTs = performance.now();
-  // Prefer an absolute deadline (anchored to the .par schedule) over the
-  // nominal duration when available, so any navigation/render lag already
-  // spent before this screen loaded shrinks the remaining wait instead of
-  // pushing the whole schedule later.
   const remainingMsFromDeadline = () => (Number.isFinite(s.deadlineEpochMs)
     ? Math.max(0, s.deadlineEpochMs - Date.now())
     : s.timeoutMs);
@@ -35,7 +31,6 @@ window.onload = async function () {
     try {
       await video.play();
     } catch (_e) {
-      // Keep timeout fallback if browser blocks autoplay with sound.
     }
 
     let finished = false;
@@ -48,8 +43,6 @@ window.onload = async function () {
     if (!s.enforceFullDuration) {
       video.addEventListener('ended', finish, { once: true });
     }
-    // Recompute after the play() await so any autoplay-start delay is also
-    // subtracted from the remaining wait.
     setTimeout(finish, remainingMsFromDeadline());
     return;
   }

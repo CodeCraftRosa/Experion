@@ -1,7 +1,7 @@
 {
-  "participantId": "01",
+  "participantId": "10",
   "runNumber": 1,
-  "instructionScreenDurationSec": 6,
+  "instructionScreenDurationSec": 15,
   "postInstructionsFixationSec": 3,
   "postStimulusFixationSec": 1,
   "instructionScreens": [
@@ -25,14 +25,9 @@
     "noKeys": ["b"]
   },
   "iti": {
-    "mode": "from_trial_order",
-    "fixedSec": 2,
-    "randomMinSec": 2,
-    "randomMaxSec": 5,
     "showFixationCross": true
   },
   "optseq": {
-    "enabled": true,
     "folder": "optseq"
   }
 }

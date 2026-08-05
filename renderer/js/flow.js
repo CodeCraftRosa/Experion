@@ -45,8 +45,13 @@ function sleepUntilOffset(targetOffsetMs) {
   return sleep(Math.max(0, remaining));
 }
 
-function deadlineEpochMs(targetOffsetMs) {
-  return Number.isFinite(targetOffsetMs) ? runtime.startedAt + targetOffsetMs : null;
+function scheduledOffsetMs(scheduledSec) {
+  return Number.isFinite(scheduledSec) ? scheduledSec * 1000 + runtime.trialsScheduleBaseMs : null;
+}
+
+function scheduledDeadlineMs(scheduledSec) {
+  const offsetMs = scheduledOffsetMs(scheduledSec);
+  return Number.isFinite(offsetMs) ? runtime.startedAt + offsetMs : null;
 }
 
 function sanitizeFilePart(value) {
@@ -71,6 +76,10 @@ function toCsv(rows) {
 
 function normalizeExpectedResponse(value) {
   return String(value || '').trim().toLowerCase() === 'yes' ? 'yes' : 'no';
+}
+
+function getResponseWindowSec(trial) {
+  return Number(trial.response_window_sec || runtime.config.response.maxDurationSec || 3);
 }
 
 function getRunCsvPath() {
@@ -99,14 +108,10 @@ function selectRunTrials() {
   }
 }
 
-function padParticipantId(id) {
-  return String(id).trim().padStart(2, '0');
-}
-
 function getParFilePath() {
   const optseqConfig = runtime.config.optseq || {};
   const folder = optseqConfig.folder || 'optseq';
-  const pStr = padParticipantId(runtime.participantId);
+  const pStr = String(runtime.participantId).trim().padStart(2, '0');
   return `${folder}/Participant ${pStr}/experion_${pStr}_${runtime.runNumber}.par`;
 }
 
@@ -131,6 +136,7 @@ function buildParDrivenRunTrials(runTrials, parEvents) {
   const writtenQueue = runTrials.filter((t) => t.modality === 'written').slice();
   const videoQueue = runTrials.filter((t) => t.modality === 'video').slice();
   const ordered = [];
+  const addSec = (base, add) => (base !== null ? base + add : null);
   let lastTrial = null;
 
   for (const event of parEvents) {
@@ -143,18 +149,16 @@ function buildParDrivenRunTrials(runTrials, parEvents) {
           `Par file has more ${isVideo ? 'videostim' : 'imagestim'} events than available ${isVideo ? 'video' : 'written'} trials for run ${runtime.runNumber}.`
         );
       }
-      const responseWindowSec = Number(trial.response_window_sec || runtime.config.response.maxDurationSec || 3);
+      const responseWindowSec = getResponseWindowSec(trial);
       const postStimulusFixationSec = Number(runtime.config.postStimulusFixationSec || 0);
       const stimulusDurationSec = Math.max(0, event.duration - responseWindowSec - postStimulusFixationSec);
-      const stimOnsetSec = event.onsetSec;
-      const stimEndSec = stimOnsetSec !== null ? stimOnsetSec + stimulusDurationSec : null;
-      const fixationEndSec = stimEndSec !== null ? stimEndSec + postStimulusFixationSec : null;
-      const responseEndSec = stimOnsetSec !== null ? stimOnsetSec + event.duration : null;
+      const stimEndSec = addSec(event.onsetSec, stimulusDurationSec);
+      const fixationEndSec = addSec(stimEndSec, postStimulusFixationSec);
+      const responseEndSec = addSec(event.onsetSec, event.duration);
       lastTrial = {
         ...trial,
         stimulus_duration_sec: stimulusDurationSec,
         iti_sec: 0,
-        _itiSource: 'optseq',
         _scheduledStimEndSec: stimEndSec,
         _scheduledFixationEndSec: fixationEndSec,
         _scheduledResponseEndSec: responseEndSec,
@@ -178,29 +182,11 @@ function buildParDrivenRunTrials(runTrials, parEvents) {
   return ordered;
 }
 
-async function applyOptseqTimingIfEnabled() {
-  const optseqConfig = runtime.config.optseq || {};
-  if (optseqConfig.enabled === false) return;
+async function applyOptseqTiming() {
   const parPath = getParFilePath();
   const parText = await window.electronAPI.readText(parPath);
   const parEvents = parsePar(parText);
   runtime.runTrials = buildParDrivenRunTrials(runtime.runTrials, parEvents);
-}
-
-function computeItiSec(trial) {
-  const itiConfig = runtime.config.iti || {};
-  if (trial._itiSource === 'optseq') {
-    return Number.isFinite(trial.iti_sec) ? Number(trial.iti_sec) : 0;
-  }
-  if (itiConfig.mode === 'random') {
-    const min = Number(itiConfig.randomMinSec || 2);
-    const max = Number(itiConfig.randomMaxSec || 5);
-    return min + Math.random() * (max - min);
-  }
-  if (itiConfig.mode === 'from_trial_order') {
-    return Number(trial.iti_sec || itiConfig.fixedSec || 2);
-  }
-  return Number(itiConfig.fixedSec || 2);
 }
 
 function resolveVideoFileName(stimulusFile) {
@@ -217,10 +203,7 @@ async function showStimulus(trial) {
     runtime.stimulusResolver = (mediaData) => resolve({ onsetMs, ...mediaData });
     setOuterFrameStimulusMode(true);
     const trialStimulusMs = Number(trial.stimulus_duration_sec || runtime.config.media.imageDurationSec || 5) * 1000;
-    const scheduledEndOffsetMs = Number.isFinite(trial._scheduledStimEndSec)
-      ? trial._scheduledStimEndSec * 1000 + runtime.trialsScheduleBaseMs
-      : null;
-    const deadlineMs = deadlineEpochMs(scheduledEndOffsetMs);
+    const deadlineMs = scheduledDeadlineMs(trial._scheduledStimEndSec);
 
     if (trial.modality === 'video') {
       const videoFile = resolveVideoFileName(trial.stimulus_file);
@@ -259,11 +242,8 @@ async function showIntroInstruction(text, timeoutMs = 10000) {
 
 async function showResponse(trial) {
   setOuterFrameStimulusMode(false);
-  const responseWindowMs = Number(trial.response_window_sec || runtime.config.response.maxDurationSec || 3) * 1000;
-  const scheduledEndOffsetMs = Number.isFinite(trial._scheduledResponseEndSec)
-    ? trial._scheduledResponseEndSec * 1000 + runtime.trialsScheduleBaseMs
-    : null;
-  const deadlineMs = deadlineEpochMs(scheduledEndOffsetMs);
+  const responseWindowMs = getResponseWindowSec(trial) * 1000;
+  const deadlineMs = scheduledDeadlineMs(trial._scheduledResponseEndSec);
 
   return new Promise((resolve) => {
     let onsetMs = 0;
@@ -290,34 +270,25 @@ async function showResponse(trial) {
   });
 }
 
-async function showIti(trial, extraFromResponseSec = 0) {
+async function showGrayScreen(durationSec, scheduledEndOffsetMs, showCross) {
   setOuterFrameStimulusMode(false);
-  const itiSec = computeItiSec(trial) + Math.max(0, Number(extraFromResponseSec) || 0);
-  window.flowState.showFixationCross = runtime.config.iti.showFixationCross !== false;
-  const onsetMs = msFromStart();
-  contentWindow.src = '../html/itiScreen.html';
-  const scheduledEndOffsetMs = Number.isFinite(trial._scheduledItiEndSec)
-    ? trial._scheduledItiEndSec * 1000 + runtime.trialsScheduleBaseMs
-    : null;
-  if (scheduledEndOffsetMs !== null) {
-    await sleepUntilOffset(scheduledEndOffsetMs);
-  } else {
-    await sleep(itiSec * 1000);
-  }
-  return { onsetMs, itiSec };
-}
-
-async function showFixationCross(durationSec, scheduledEndOffsetMs = null) {
-  setOuterFrameStimulusMode(false);
-  window.flowState.showFixationCross = true;
-  const onsetMs = msFromStart();
+  window.flowState.showFixationCross = showCross;
   contentWindow.src = '../html/itiScreen.html';
   if (Number.isFinite(scheduledEndOffsetMs)) {
     await sleepUntilOffset(scheduledEndOffsetMs);
   } else {
     await sleep(Math.max(0, Number(durationSec) || 0) * 1000);
   }
-  return { onsetMs, durationSec };
+}
+
+async function showIti(trial, extraFromResponseSec = 0) {
+  const itiSec = Number(trial.iti_sec || 0) + Math.max(0, Number(extraFromResponseSec) || 0);
+  const showCross = runtime.config.iti.showFixationCross !== false;
+  await showGrayScreen(itiSec, scheduledOffsetMs(trial._scheduledItiEndSec), showCross);
+}
+
+async function showFixationCross(durationSec, scheduledEndOffsetMs = null) {
+  await showGrayScreen(durationSec, scheduledEndOffsetMs, true);
 }
 
 async function finishRun() {
@@ -357,19 +328,14 @@ async function runExperimentFlow() {
     const trial = runtime.runTrials[i];
     const stimulusData = await showStimulus(trial);
     if (postStimulusFixationSec > 0) {
-      const scheduledFixationEndOffsetMs = Number.isFinite(trial._scheduledFixationEndSec)
-        ? trial._scheduledFixationEndSec * 1000 + runtime.trialsScheduleBaseMs
-        : null;
-      await showFixationCross(postStimulusFixationSec, scheduledFixationEndOffsetMs);
+      await showFixationCross(postStimulusFixationSec, scheduledOffsetMs(trial._scheduledFixationEndSec));
     }
     const responseData = await showResponse(trial);
     const expectedResponse = normalizeExpectedResponse(trial.expected_response);
     const givenResponse = responseData.response || '';
     const isAligned = givenResponse && givenResponse === expectedResponse;
 
-    const maxResponseMs = responseData.maxMs !== undefined && responseData.maxMs !== null
-      ? Number(responseData.maxMs)
-      : Number(trial.response_window_sec || runtime.config.response.maxDurationSec || 3) * 1000;
+    const maxResponseMs = Number(responseData.maxMs);
     const responseScreenDurationMs = Math.min(
       maxResponseMs,
       Math.max(0, Number(responseData.screenDurationMs || maxResponseMs))
@@ -463,7 +429,7 @@ async function init() {
   await window.electronAPI.ensureDir(runtime.outBase);
 
   selectRunTrials();
-  await applyOptseqTimingIfEnabled();
+  await applyOptseqTiming();
   contentWindow.src = '../html/initializationButtonScreen.html';
 }
 

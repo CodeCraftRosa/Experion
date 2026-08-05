@@ -46,7 +46,6 @@ window.onload = function () {
   const noLabel = cfg && cfg.noLabel ? cfg.noLabel : 'No lo viste';
   const questionText = cfg && cfg.questionText ? cfg.questionText : 'Viste este sintoma?';
   maxMs = cfg && cfg.maxMs ? cfg.maxMs : 3000;
-  // the .par schedule instead of pushing the following ITI later.
   if (cfg && Number.isFinite(cfg.deadlineEpochMs)) {
     maxMs = Math.max(0, cfg.deadlineEpochMs - Date.now());
   }

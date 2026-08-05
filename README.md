@@ -4,7 +4,7 @@ This project is a symptoms recognition paradigm created for fMRI.
 
 ## What does this paradigm contain?
 
-The paradigm contains the code for 3 runs with 28 trials per run (The content in terms of videos/images naming is provided by an Excel file; meanwhile the trial sequencing and ITI timing is driven by the optseq .par files)
+The paradigm contains the code for 3 runs with 28 trials per run (The content in terms of videos/images naming is provided by an Excel file; the trial sequencing and all timing (stimulus, ITI) is always driven by the optseq .par files)
 The following screens are shown for each run: 
 
 - Instruction screens shown once at the beginning of each run, followed by a fixation cross before the first trial
@@ -47,14 +47,13 @@ Main fields:
 - runNumber: Setting the run number to 1,2, or 3.
 - instructionScreenDurationSec: Setting the duration of the instruction screens 
 - postInstructionsFixationSec: Setting the duration of the Fixaction cross before first trial
-- postStimulusFixationSec: Setting the duration of the static fixation cross shown between the stimulus screen and the response screen (default 1 second). When optseq is enabled, this duration is subtracted from each .par event's duration, since the .par files already include it.
+- postStimulusFixationSec: Setting the duration of the static fixation cross shown between the stimulus screen and the response screen (default 1 second). This duration is subtracted from each .par event's duration, since the .par files already include it.
 - instructionScreens: This is the exact text displayed on each screen. Each line is one screen.
 - media.imageDurationSec: The written (image) symptoms 
 - response.maxDurationSec: The maximum amount of time for response - however the screen will disappear with a delay of .5 seconds after pressing a button. This is just the maximum time participants have to answer. 
 - response.yesLabel, response.noLabel: THe naming of the response buttons 
-- iti.mode (from_trial_order, fixed, random), iti.fixedSec, iti.randomMinSec, iti.randomMaxSec — used only when optseq.enabled is false
-- iti.showFixationCross
-- optseq.enabled, optseq.folder — when enabled, trial order and ITI timing come from the matching .par file instead of the excel/iti config, if disabled it comes from the internal logic of the code. Currently set to the `optseq` folder.
+- iti.showFixationCross: whether the ITI screen displays a fixation cross
+- optseq.folder: trial order and ITI timing always come from the matching .par file in this folder. 
 
 ## Output
 

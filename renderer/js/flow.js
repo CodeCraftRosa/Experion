@@ -262,8 +262,8 @@ async function showResponse(trial) {
       noLabel: runtime.config.response.noLabel,
       maxMs: responseWindowMs,
       deadlineEpochMs: deadlineMs,
-      yesKeys: runtime.config.response.yesKeys || ['y'],
-      noKeys: runtime.config.response.noKeys || ['b']
+      yesKeys: runtime.config.response.yesKeys || ['b'],
+      noKeys: runtime.config.response.noKeys || ['y']
     };
     onsetMs = msFromStart();
     contentWindow.src = '../html/responseScreen.html';
@@ -351,7 +351,9 @@ async function runExperimentFlow() {
       given_response: givenResponse,
       expected_given_aligned: isAligned ? 'TRUE' : 'FALSE',
       stimulus_onset_ms: stimulusData.onsetMs.toFixed(2),
+      stimulus_duration_ms: Number(stimulusData.actualDurationMs || 0).toFixed(2),
       response_onset_ms: responseData.onsetMs.toFixed(2),
+      response_duration_ms: responseScreenDurationMs.toFixed(2),
       response_rt_ms: responseData.rtMs !== null && responseData.rtMs !== undefined ? Number(responseData.rtMs).toFixed(2) : ''
     });
   }

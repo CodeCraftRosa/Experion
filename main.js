@@ -45,6 +45,12 @@ function getOutputBaseDir() {
   return path.join(app.getPath('userData'), 'Experion Output');
 }
 
+// Study data (config-file.txt, optseq/, data/) must stay editable after packaging,
+// so read them from beside the executable rather than from inside app.asar.
+function getExternalDataDir() {
+  return app.isPackaged ? path.dirname(process.execPath) : __dirname;
+}
+
 function resolvePath(maybeAbsolutePath) {
   return path.isAbsolute(maybeAbsolutePath)
     ? maybeAbsolutePath
@@ -62,13 +68,13 @@ ipcMain.handle('get-output-base-dir', async () => {
 });
 
 ipcMain.handle('read-json', async (_event, relativeFilePath) => {
-  const filePath = path.join(__dirname, relativeFilePath);
+  const filePath = path.join(getExternalDataDir(), relativeFilePath);
   const text = fs.readFileSync(filePath, 'utf8');
   return JSON.parse(text);
 });
 
 ipcMain.handle('read-text', async (_event, relativeFilePath) => {
-  const filePath = path.join(__dirname, relativeFilePath);
+  const filePath = path.join(getExternalDataDir(), relativeFilePath);
   return fs.readFileSync(filePath, 'utf8');
 });
 

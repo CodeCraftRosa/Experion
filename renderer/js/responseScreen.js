@@ -2,8 +2,8 @@ let completed = false;
 let rtStart = 0;
 let screenStart = 0;
 let maxMs = 3000;
-let yesKeys = ['y'];
-let noKeys = ['b'];
+let yesKeys = ['b'];
+let noKeys = ['y'];
 let holdAfterResponseMs = 500;
 let yesBtn = null;
 let noBtn = null;
@@ -50,8 +50,8 @@ window.onload = function () {
     maxMs = Math.max(0, cfg.deadlineEpochMs - Date.now());
   }
   holdAfterResponseMs = cfg && cfg.feedbackHoldMs ? cfg.feedbackHoldMs : 500;
-  yesKeys = cfg && Array.isArray(cfg.yesKeys) ? cfg.yesKeys : ['y'];
-  noKeys = cfg && Array.isArray(cfg.noKeys) ? cfg.noKeys : ['b'];
+  yesKeys = cfg && Array.isArray(cfg.yesKeys) ? cfg.yesKeys : ['b'];
+  noKeys = cfg && Array.isArray(cfg.noKeys) ? cfg.noKeys : ['y'];
 
   document.getElementById('responseTitle').textContent = questionText;
   yesBtn = document.getElementById('yesBtn');
@@ -62,8 +62,8 @@ window.onload = function () {
   screenStart = performance.now();
   rtStart = performance.now();
 
-  yesBtn.onclick = () => respond('yes', 'mouse_yes', yesBtn);
-  noBtn.onclick = () => respond('no', 'mouse_no', noBtn);
+  yesBtn.onclick = () => respond('yes', yesBtn);
+  noBtn.onclick = () => respond('no', noBtn);
 
   timeoutId = setTimeout(() => finish(null, null), maxMs);
 };

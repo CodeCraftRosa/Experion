@@ -21,8 +21,8 @@
     "maxDurationSec": 3,
     "yesLabel": "Si lo viste",
     "noLabel": "No lo viste",
-    "yesKeys": ["y"],
-    "noKeys": ["b"]
+    "yesKeys": ["b"],
+    "noKeys": ["y"]
   },
   "iti": {
     "showFixationCross": true
